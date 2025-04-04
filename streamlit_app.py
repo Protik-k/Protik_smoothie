@@ -7,7 +7,7 @@ st.write("Choose the fruits your want in custom smoothie!")
 # option = st.selectbox('What is your favorite fruit?',('Banana', 'Strawberries', 'Peaches'))
 # st.write("Your favorite fruit is:",option)
 
-cnx = st.connection("Snowflake")
+cnx = st.connection("snowflake")
 session = cnx.session()
 name_on_smoothie= st.text_input("Name on Smoothie: ")
 st.write("Name on the smoothie will be : ", name_on_smoothie)
