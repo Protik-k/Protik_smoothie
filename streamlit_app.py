@@ -41,28 +41,30 @@ my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT
 if my_dataframe.count() > 0:
     pd_df = my_dataframe.to_pandas()
 
-ingredient_lists = st.multiselect('Choose up to 5 ingredients:', pd_df['FRUIT_NAME'], max_selections=5)
-if ingredient_lists:
-    ingredients_string = " ".join(ingredient_lists)
-    
-    for fruit_chosen in ingredient_lists:
-        search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
-        st.markdown(f'<div class="subheader">{fruit_chosen} Nutrition Information</div>', unsafe_allow_html=True)
+    ingredient_lists = st.multiselect('Choose up to 5 ingredients:', pd_df['FRUIT_NAME'], max_selections=5)
+    if ingredient_lists:
+        ingredients_string = " ".join(ingredient_lists)
         
-        try:
-            smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
-            smoothiefroot_response.raise_for_status()
-            sfroot_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
-        except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching data for {fruit_chosen}: {e}")
-    
-    st.write(ingredients_string)
-    
-    my_insert_stmt = """
-        INSERT INTO smoothies.public.orders (ingredients, name_on_order)
-        VALUES (%s, %s)
-    """
-    time_to_insert = st.markdown('<button class="button">Submit Order</button>', unsafe_allow_html=True)
-    if time_to_insert:
-        session.sql(my_insert_stmt, (ingredients_string, name_on_smoothie)).collect()
-        st.success(f'Your Smoothie is ordered, {name_on_smoothie}!', icon="✅")
+        for fruit_chosen in ingredient_lists:
+            search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
+            st.markdown(f'<div class="subheader">{fruit_chosen} Nutrition Information</div>', unsafe_allow_html=True)
+            
+            try:
+                smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
+                smoothiefroot_response.raise_for_status()
+                sfroot_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+            except requests.exceptions.RequestException as e:
+                st.error(f"Error fetching data for {fruit_chosen}: {e}")
+        
+        st.write(ingredients_string)
+        
+        my_insert_stmt = """
+            INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+            VALUES (%s, %s)
+        """
+        time_to_insert = st.button('Submit Order')
+        if time_to_insert:
+            session.sql(my_insert_stmt, (ingredients_string, name_on_smoothie)).collect()
+            st.success(f'Your Smoothie is ordered, {name_on_smoothie}!', icon="✅")
+else:
+    st.error("No data available in the table.")
