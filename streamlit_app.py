@@ -3,7 +3,33 @@ from snowflake.snowpark.functions import col
 import requests
 import pandas as pd
 
-st.title("🥤 Customise your Smoothie! 🥤")
+st.markdown("""
+    <style>
+    .title {
+        font-size: 2em;
+        color: #4CAF50;
+        text-align: center;
+    }
+    .subheader {
+        font-size: 1.5em;
+        color: #FF5722;
+    }
+    .button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="title">🥤 Customise your Smoothie! 🥤</div>', unsafe_allow_html=True)
 st.write("Choose the fruits you want in your custom smoothie!")
 
 cnx = st.connection("snowflake")
@@ -12,7 +38,7 @@ name_on_smoothie = st.text_input("Name on Smoothie:")
 st.write("Name on the smoothie will be:", name_on_smoothie)
 
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'), col('SEARCH_ON'))
-if not my_dataframe.empty:
+if my_dataframe.count() > 0:
     pd_df = my_dataframe.to_pandas()
 
 ingredient_lists = st.multiselect('Choose up to 5 ingredients:', pd_df['FRUIT_NAME'], max_selections=5)
@@ -21,7 +47,7 @@ if ingredient_lists:
     
     for fruit_chosen in ingredient_lists:
         search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
-        st.subheader(f"{fruit_chosen} Nutrition Information")
+        st.markdown(f'<div class="subheader">{fruit_chosen} Nutrition Information</div>', unsafe_allow_html=True)
         
         try:
             smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
@@ -36,7 +62,7 @@ if ingredient_lists:
         INSERT INTO smoothies.public.orders (ingredients, name_on_order)
         VALUES (%s, %s)
     """
-    time_to_insert = st.button('Submit Order')
+    time_to_insert = st.markdown('<button class="button">Submit Order</button>', unsafe_allow_html=True)
     if time_to_insert:
         session.sql(my_insert_stmt, (ingredients_string, name_on_smoothie)).collect()
         st.success(f'Your Smoothie is ordered, {name_on_smoothie}!', icon="✅")
